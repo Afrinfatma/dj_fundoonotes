@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'dj_fundoo_notes.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dj_fundoonotes',
+        'NAME': 'dj_fundoo_notes',
         'USER': 'postgres',
         'PASSWORD': 'afrinfatma',
         'HOST': '127.0.0.1',
@@ -125,3 +125,4 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL="user.User"
