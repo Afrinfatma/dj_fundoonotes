@@ -23,7 +23,7 @@ def registration(request):
         if request.method == 'POST':
             data = json.loads(request.body)
             user_details = User.objects.create_user(username=data.get("username"), password=data.get("password"),
-                                                    email=data.get("email"), phone_number=data.get("phn_number"),
+                                                    email=data.get("email"), phone_number=data.get("phone_number"),
                                                     location=data.get("location"))
             # user_details.save()
             lg.debug((f" user {user_details.username} registred successfully"))
