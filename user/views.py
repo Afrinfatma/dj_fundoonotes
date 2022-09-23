@@ -1,11 +1,11 @@
 import logging
-#
-# from django.contrib.auth import authenticate
-# from django.contrib.auth.models import User
+
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.http import JsonResponse
 import json
-from user.models import User as CustomUser
+from .models import User as CustomUser
 import logging as lg
 
 
@@ -25,15 +25,14 @@ def registration(request):
     try:
 
         lg.info(request.method)
-        if request.method =='POST':
-            data=json.loads(request.body)
-            user_details=CustomUser(user_name=data.get("user_name"),password=data.get("password"),
-                              email=data.get("email"),phn_number=data.get("phn_number"),
-                              location=data.get("location"))
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            user_details =User.objects.create_user(username=data.get("username"), password=data.get("password"),
+                                                    email=data.get("email"))
             user_details.save()
-            lg.debug((f" user {user_details.user_name} registred successfully"))
-            return JsonResponse({"msg":f"{user_details.user_name} registered successfully"})
-        return JsonResponse ({"msg":"Something went wrong"})
+            lg.debug((f" user {user_details.username} registred successfully"))
+            return JsonResponse({"msg": f"{user_details.username} registered successfully"})
+        return JsonResponse({"msg": "Something went wrong"})
     except Exception as e:
         lg.error(e)
         return JsonResponse({"msg": str(e)})
@@ -51,12 +50,12 @@ def login(request):
         lg.info(request.method)
         if request.method=='POST':
             data=json.loads(request.body)
-            login_details = CustomUser.objects.get(user_name=data.get("user_name"),
+            login_details = authenticate(username=data.get("user_name"),
                                password=data.get("password"))
             # login_details.save()
             if login_details is not None:
-                lg.debug (f"User{login_details.user_name} login successfully")
-                return JsonResponse({"msg":f"{login_details.user_name} login successfully"})
+                lg.debug (f"User{login_details.username} login successfully")
+                return JsonResponse({"msg":f"{login_details.username} login successfully"})
             else:
                 return JsonResponse({"msg":"Invalid credentials"})
         return JsonResponse({"msg":"Something went wrong"})
