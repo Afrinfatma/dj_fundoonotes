@@ -79,7 +79,7 @@ class NotesApi(APIView):
                  response with success message
              """
         try:
-            notes=Notes.objects.get(id=request.data.get("id"))
+            notes=Notes.objects.get(id=request.data.get("id"),user_id=request.data.get("user_id"))
             notes.delete()
             return Response({"msg":"Notes deleted successfully"},status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
