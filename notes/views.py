@@ -1,4 +1,7 @@
 import logging as lg
+
+from user.models import User
+from user.utils import JwtService
 from .models import Notes
 from .serializers import NotesSerializer
 from django.http import Http404
@@ -7,6 +10,19 @@ from rest_framework.response import Response
 from rest_framework import status
 
 lg.basicConfig(filename="notes.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
+
+# def verify_token(request):
+#     headers = request.headers
+#     print(headers)
+#     token= headers.get("Token")
+#     payload= JwtService().decode(token = token)
+#     if "user_id" not in payload.keys():
+#         raise Exception("User not found ")
+#     user_id = payload.get("user_id")
+#     user = User.objects.filter(id = user_id).first()
+#     if user is None:
+#         raise Exception(" user not found")
+#     request.data.update(user_id = user.id)
 
 
 class NotesApi(APIView):
@@ -38,7 +54,6 @@ class NotesApi(APIView):
                  response with success message
              """
         try:
-
             notes=Notes.objects.filter(user_id=request.data.get("user_id"))
             serializer = NotesSerializer(notes, many=True)
             lg.info(serializer.data)
