@@ -1,14 +1,19 @@
-
 import logging as lg
+
 from django.contrib.auth import authenticate
+from django.core.mail import send_mail
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+from rest_framework.views import APIView
+
+from dj_fundoo_notes import settings
 from .models import User
 from .serializers import UserSerializer
-from django.http import Http404
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+from .utils import JwtService
 
 lg.basicConfig(filename="user.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
+
 
 class UserRegistration(APIView):
 
@@ -22,15 +27,28 @@ class UserRegistration(APIView):
         try:
             serializer = UserSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save()# serialize the data after validation
-            return Response({"msg":"created successfully","data":serializer.data},status=status.HTTP_201_CREATED)#serializer.data is used for deserialization
+            serializer.save()  # serialize the data after validation
+            token = JwtService().encode({"user_id": serializer.data.get("id"),
+                                         "username": serializer.data.get("username")})
+            send_mail(
+                subject='Json Web Token For User Registration',
+                message=settings.BASE_URL +
+                        reverse('verify_token', kwargs={"token": token}),
+                from_email=None,
+                recipient_list=[serializer.data.get('email')],
+                fail_silently=False,
+            )
+            return Response({"msg": "created successfully", "data": serializer.data},
+                            status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
 
         except Exception as e:
             lg.error(e)
-            return Response({"msg":str(e)},status=400)
+            return Response({"msg": str(e)}, status=400)
+
+
 class UserLogin(APIView):
 
-    def post(self,request):
+    def post(self, request):
         """
               Args:
                   request: accepting the user details from  postman
@@ -39,14 +57,34 @@ class UserLogin(APIView):
               """
         try:
 
-                login_details = authenticate(**request.data)
+            user = authenticate(**request.data)
 
-                if login_details is not None:
-                    lg.debug(f"User{login_details.username} login successfully")
-                    return Response({"msg": f"{login_details.username} login successfully"},status=status.HTTP_202_ACCEPTED)
-                else:
-                    return Response({"msg": "Invalid credentials"},status=400)
+            if not user:
+                return Response({"msg": "Invalid credentials"}, status=400)
+
+            return Response({"msg": f"{user.username} login successfully","data":{"token":user.token}},
+                            status=status.HTTP_202_ACCEPTED)
 
         except Exception as e:
             lg.error(e)
-            return Response({"msg": str(e)},status==400)
+            return Response({"msg": str(e)}, status == 400)
+
+
+class VerifyToken(APIView):
+    def get(self, request, token):
+        """
+        request: sending request from the browsable api
+        after generating the token from registraion process, this function will decode with username and return
+        with success message
+        """
+        try:
+            decoded_data = JwtService().decode(token)
+            if "username" not in decoded_data:
+                raise Exception("Invalid Token")
+            user = User.objects.get(username=decoded_data.get("username"))
+            user.is_verify = True
+            user.save()
+            return Response({"message": "User verified"})
+        except Exception as e:
+            lg.error(e)
+            return Response({"message": str(e)}, status=400)
