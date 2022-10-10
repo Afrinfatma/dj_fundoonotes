@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from datetime import timedelta
 import jwt
 
 
@@ -8,7 +10,7 @@ class JwtService:
             if not isinstance(data,dict):
                 raise Exception ("data in dictionary format")
 
-            return jwt.encode(data,"secret",algorithm="HS256")
+            return jwt.encode(data, "secret",algorithm="HS256")
 
     def decode(self,token):
         try:

@@ -8,25 +8,22 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from notes.utils import verify_token
 
 lg.basicConfig(filename="notes.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
-
-# def verify_token(request):
-#     headers = request.headers
-#     print(headers)
-#     token= headers.get("Token")
-#     payload= JwtService().decode(token = token)
-#     if "user_id" not in payload.keys():
-#         raise Exception("User not found ")
-#     user_id = payload.get("user_id")
-#     user = User.objects.filter(id = user_id).first()
-#     if user is None:
-#         raise Exception(" user not found")
-#     request.data.update(user_id = user.id)
+"""
+Instead of writing the separate function we are using decorator
+decoraters allows to preprocess the function and perform some sort of operation, before the function is executed,
+we are passing the function whatever we written in decorater as a parameter, inside that wrapper function, with
+this we are accessing to the parameter of the functon below the decorater(child function),in this case it is 
+(self and request), when request comes it will hit the decorator first, inside decorator whatever preposseing
+required that will happens and finally it will call the fuction
+"""
 
 
 class NotesApi(APIView):
 
+    @verify_token
     def post(self,request):
         """
                           Args:
@@ -45,7 +42,7 @@ class NotesApi(APIView):
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
-
+    @verify_token
     def get(self,request):
         """
              Args:
@@ -62,7 +59,7 @@ class NotesApi(APIView):
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
 
-
+    @verify_token
     def put(self,request):
             """
                  Args:
@@ -85,7 +82,7 @@ class NotesApi(APIView):
             except Exception as e:
                 lg.error(e)
                 return Response({"msg": str(e)}, status=400)
-
+    @verify_token
     def delete(self,request):
         """
              Args:
