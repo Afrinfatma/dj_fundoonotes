@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from notes.utils import verify_token
+from .utils import NoteRedisCrud
 
 lg.basicConfig(filename="notes.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
 """
@@ -24,7 +25,7 @@ required that will happens and finally it will call the fuction
 class NotesApi(APIView):
 
     @verify_token
-    def post(self,request):
+    def post(self, request):
         """
                           Args:
                               request: accepting the note details from  postman
@@ -36,14 +37,16 @@ class NotesApi(APIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()  # serialize the data after validation
             lg.info(serializer.data)
+            NoteRedisCrud().save_note(serializer.data, request.data.get("user_id"))
             return Response({"msg": "created successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
 
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
+
     @verify_token
-    def get(self,request):
+    def get(self, request):
         """
              Args:
                  request: accepting the user id from client server or postman
@@ -51,39 +54,44 @@ class NotesApi(APIView):
                  response with success message
              """
         try:
-            notes=Notes.objects.filter(user_id=request.data.get("user_id"))
+            notes = Notes.objects.filter(user_id=request.data.get("user_id"))
             serializer = NotesSerializer(notes, many=True)
-            lg.info(serializer.data)
-            return Response({"msg":"Note retrieved successfully","data": serializer.data},status=status.HTTP_200_OK)
+            # for item in serializer.data:
+            #       NoteRedisCrud().save_note(item,request.data.get("user_id"))
+            # lg.info(serializer.data)
+            get_data =NoteRedisCrud().get_note(request.data.get("user_id"))
+            return Response({"msg": "Note retrieved successfully", "data": get_data.values()}, status=status.HTTP_200_OK)
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
 
     @verify_token
-    def put(self,request):
-            """
+    def put(self, request):
+        """
                  Args:
                      request: accepting the note details from  postman
                  Returns:
                      response with success message
                  """
 
-            try:
-                print(request.data)
-                print(request.data.get("id"))
-                notes=Notes.objects.get(id=request.data.get("id"))
-                serializer = NotesSerializer(notes,data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()  # serialize the data after validation
-                lg.info(serializer.data)
-                return Response({"msg": "Notes updated successfully", "data": serializer.data},
-                                status=status.HTTP_202_ACCEPTED)  # serializer.data is used for deserialization
+        try:
+            print(request.data)
+            print(request.data.get("id"))
+            notes = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user_id"))
+            serializer = NotesSerializer(notes, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()  # serialize the data after validation
+            lg.info(serializer.data)
+            NoteRedisCrud().save_note(serializer.data, request.data.get("user_id"))
+            return Response({"msg": "Notes updated successfully", "data": serializer.data},
+                            status=status.HTTP_202_ACCEPTED)  # serializer.data is used for deserialization
 
-            except Exception as e:
-                lg.error(e)
-                return Response({"msg": str(e)}, status=400)
+        except Exception as e:
+            lg.error(e)
+            return Response({"msg": str(e)}, status=400)
+
     @verify_token
-    def delete(self,request):
+    def delete(self, request):
         """
              Args:
                  request: accepting the note id from  postman
@@ -91,9 +99,10 @@ class NotesApi(APIView):
                  response with success message
              """
         try:
-            notes=Notes.objects.get(id=request.data.get("id"),user_id=request.data.get("user_id"))
+            NoteRedisCrud().delete_note(request.data.get('id'), request.data.get('user_id'))
+            notes = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user_id"))
             notes.delete()
-            return Response({"msg":"Notes deleted successfully"},status=status.HTTP_204_NO_CONTENT)
+            return Response({"msg": "Notes deleted successfully", "data": {}}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)

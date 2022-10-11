@@ -13,7 +13,7 @@ class User(AbstractUser):
 
     @property
     def token(self):
-         return JwtService().encode({"user_id":self.id,"username":self.username,"exp": datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(seconds=30)})
+         return JwtService().encode({"user_id":self.id,"username":self.username,"exp": datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(seconds=240)})
 
 
 
