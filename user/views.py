@@ -11,6 +11,7 @@ from dj_fundoo_notes import settings
 from .models import User
 from .serializers import UserSerializer
 from .utils import JwtService
+from .task import send_email_task
 
 lg.basicConfig(filename="user.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
 
@@ -30,14 +31,10 @@ class UserRegistration(APIView):
             serializer.save()  # serialize the data after validation
             token = JwtService().encode({"user_id": serializer.data.get("id"),
                                          "username": serializer.data.get("username")})
-            send_mail(
-                subject='Json Web Token For User Registration',
-                message=settings.BASE_URL +
-                        reverse('verify_token', kwargs={"token": token}),
-                from_email=None,
-                recipient_list=[serializer.data.get('email')],
-                fail_silently=False,
-            )
+
+            recipient_list=[serializer.data.get('email')]
+            send_email_task.delay(token,recipient_list)
+
             return Response({"msg": "created successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
 
