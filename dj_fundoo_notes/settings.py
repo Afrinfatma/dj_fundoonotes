@@ -138,5 +138,6 @@ EMAIL_HOST_USER ="afrinfatma4@gmail.com"
 EMAIL_HOST_PASSWORD ="yeofyxyeaoxonfpz"
 EMAIL_USE_TLS =True
 
-CELERY_BROKER_URL = "'redis://localhost:6379/0"
+# CELERY_BROKER_URL = "redis://localhost:6379/0"
 # CELERY_RESULT_BACKEND = "redis://localhost:6379"
+
