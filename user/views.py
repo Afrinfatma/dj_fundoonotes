@@ -11,13 +11,14 @@ from dj_fundoo_notes import settings
 from .models import User
 from .serializers import UserSerializer
 from .utils import JwtService
-from .task import send_email_task
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 lg.basicConfig(filename="user.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
 
 
 class UserRegistration(APIView):
-
+    @swagger_auto_schema(request_body=UserSerializer)
     def post(self, request, format=None):
         """
                    Args:
@@ -31,9 +32,15 @@ class UserRegistration(APIView):
             serializer.save()  # serialize the data after validation
             token = JwtService().encode({"user_id": serializer.data.get("id"),
                                          "username": serializer.data.get("username")})
+            send_mail(
+                subject='User Registration using json web token',
+                message=settings.BASE_URL +
+                        reverse('verify_token', kwargs={"token": token}),
+                from_email=None,
+                recipient_list=[serializer.data.get('email')],
+                fail_silently=False,
+            )
 
-            recipient_list=[serializer.data.get('email')]
-            send_email_task.delay(token,recipient_list)
 
             return Response({"msg": "created successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
@@ -44,7 +51,12 @@ class UserRegistration(APIView):
 
 
 class UserLogin(APIView):
-
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING),
+            'password': openapi.Schema(type=openapi.TYPE_STRING)
+        }))
     def post(self, request):
         """
               Args:

@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from notes.utils import verify_token
 from .utils import NoteRedisCrud
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 lg.basicConfig(filename="notes.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
 """
@@ -23,7 +25,7 @@ required that will happens and finally it will call the fuction
 
 
 class NotesApi(APIView):
-
+    @swagger_auto_schema(request_body=NotesSerializer)
     @verify_token
     def post(self, request):
         """
@@ -37,7 +39,7 @@ class NotesApi(APIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()  # serialize the data after validation
             lg.info(serializer.data)
-            NoteRedisCrud().save_note(serializer.data, request.data.get("user_id"))
+
             return Response({"msg": "created successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
 
@@ -45,6 +47,14 @@ class NotesApi(APIView):
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
 
+    # @swagger_auto_schema(request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     properties={
+    #         'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+    #         'title': openapi.Schema(type=openapi.TYPE_STRING),
+    #         'description': openapi.Schema(type=openapi.TYPE_STRING)
+    #
+    #     }))
     @verify_token
     def get(self, request):
         """
@@ -59,12 +69,13 @@ class NotesApi(APIView):
             # for item in serializer.data:
             #       NoteRedisCrud().save_note(item,request.data.get("user_id"))
             # lg.info(serializer.data)
-            get_data =NoteRedisCrud().get_note(request.data.get("user_id"))
-            return Response({"msg": "Note retrieved successfully", "data": get_data.values()}, status=status.HTTP_200_OK)
+
+            return Response({"msg": "Note retrieved successfully", "data": serializer.data}, status=status.HTTP_200_OK)
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
 
+    @swagger_auto_schema(request_body=NotesSerializer)
     @verify_token
     def put(self, request):
         """
@@ -82,7 +93,7 @@ class NotesApi(APIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()  # serialize the data after validation
             lg.info(serializer.data)
-            NoteRedisCrud().save_note(serializer.data, request.data.get("user_id"))
+
             return Response({"msg": "Notes updated successfully", "data": serializer.data},
                             status=status.HTTP_202_ACCEPTED)  # serializer.data is used for deserialization
 
@@ -90,6 +101,13 @@ class NotesApi(APIView):
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
 
+    @swagger_auto_schema(request_body=openapi.Schema(type=openapi.TYPE_OBJECT,
+                                                     properties={
+                                                         'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                                                         'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                                                     },
+                                                     required=['id','user_id']),
+                         operation_summary='delete Notes')
     @verify_token
     def delete(self, request):
         """
@@ -99,7 +117,7 @@ class NotesApi(APIView):
                  response with success message
              """
         try:
-            NoteRedisCrud().delete_note(request.data.get('id'), request.data.get('user_id'))
+
             notes = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user_id"))
             notes.delete()
             return Response({"msg": "Notes deleted successfully", "data": {}}, status=status.HTTP_204_NO_CONTENT)

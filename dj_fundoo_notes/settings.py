@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'user.apps.UserConfig',
-    'notes.apps.NotesConfig'
+    'notes.apps.NotesConfig',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
@@ -141,3 +142,13 @@ EMAIL_USE_TLS =True
 # CELERY_BROKER_URL = "redis://localhost:6379/0"
 # CELERY_RESULT_BACKEND = "redis://localhost:6379"
 
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+
+      'Bearer': {
+            'type': 'apiKey',
+            'name': 'Token',
+            'in': 'header'
+      }
+   }
+}
