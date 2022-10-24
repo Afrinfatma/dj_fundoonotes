@@ -1,20 +1,28 @@
+import json
 import logging as lg
+from urllib import request
 
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
 from dj_fundoo_notes import settings
+
 from .models import User
 from .serializers import UserSerializer
 from .utils import JwtService
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
+# from drf_yasg.utils import swagger_auto_schema
+# from drf_yasg import openapi
 
 lg.basicConfig(filename="user.log", format="%(asctime)s %(name)s %(levelname)s %(message)s", level=lg.DEBUG)
+
 
 
 class UserRegistration(APIView):
@@ -49,7 +57,6 @@ class UserRegistration(APIView):
             lg.error(e)
             return Response({"msg": str(e)}, status=400)
 
-
 class UserLogin(APIView):
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -77,8 +84,6 @@ class UserLogin(APIView):
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status == 400)
-
-
 class VerifyToken(APIView):
     def get(self, request, token):
         """
@@ -97,3 +102,4 @@ class VerifyToken(APIView):
         except Exception as e:
             lg.error(e)
             return Response({"message": str(e)}, status=400)
+

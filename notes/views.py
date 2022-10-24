@@ -1,9 +1,11 @@
 import logging as lg
 
+from django.db.models import Q
+
 from user.models import User
 from user.utils import JwtService
 from .models import Notes
-from .serializers import NotesSerializer
+from .serializers import NotesSerializer, CollaboratorSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -64,7 +66,8 @@ class NotesApi(APIView):
                  response with success message
              """
         try:
-            notes = Notes.objects.filter(user_id=request.data.get("user_id"))
+            notes = Notes.objects.filter(Q(user_id=request.data.get("user_id"))|Q(collaborator__id=request.data.get("user_id"))).distinct("id")
+            # notes=Notes.objects.filter(user_id=request.data.get("user_id"))
             serializer = NotesSerializer(notes, many=True)
             # for item in serializer.data:
             #       NoteRedisCrud().save_note(item,request.data.get("user_id"))
@@ -121,6 +124,34 @@ class NotesApi(APIView):
             notes = Notes.objects.get(id=request.data.get("id"), user_id=request.data.get("user_id"))
             notes.delete()
             return Response({"msg": "Notes deleted successfully", "data": {}}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            lg.error(e)
+            return Response({"msg": str(e)}, status=400)
+
+
+class Collaborator(APIView):
+    @verify_token
+    def post(self, request):
+        try:
+
+            note = Notes.objects.get(id=request.data.get("id"))
+            note.collaborator.add(request.data.get("collaborator"))
+            note.save()
+
+
+            return Response({"msg": "created successfully", "data": request.data},
+                            status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
+
+        except Exception as e:
+            lg.error(e)
+            return Response({"message": str(e)}, status=400)
+    @verify_token
+    def delete(self, request):
+        try:
+           note=Notes.objects.get(id=request.data.get("id"))
+           note.collaborator.remove(request.data.get("collaborator"))
+           note.collaborator.all()
+           return Response({"msg": "Collaborator deleted successfully", "data": {}}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)

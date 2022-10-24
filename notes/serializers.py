@@ -12,6 +12,13 @@ class NotesSerializer(serializers.ModelSerializer):
        """
     class Meta:
         model = Notes
-        fields = ['id', 'title', 'description', 'user_id',]
-        read_only_fields = ['id']
+        fields = ['id', 'title', 'description', 'user_id','collaborator']
+        read_only_fields = ['id','collaborator']
+
+class CollaboratorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notes
+        fields=['id','collaborator']
+
 
