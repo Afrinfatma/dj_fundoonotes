@@ -9,7 +9,7 @@ from user.utils import JwtService
 def verify_token(function):
     def wrapper(self, request):
         headers = request.headers
-        print(headers)
+
         token = headers.get("Token")
         if token is None:
             raise Exception("Token not found")
@@ -21,6 +21,7 @@ def verify_token(function):
         if user is None:
             raise Exception(" user not found")
         request.data.update(user_id=user.id)
+        print("verify_token",request.data)
         return function(self, request)
 
     return wrapper

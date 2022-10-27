@@ -1,11 +1,11 @@
 import logging as lg
+from urllib import request
 
 from django.db.models import Q
-
 from user.models import User
 from user.utils import JwtService
-from .models import Notes
-from .serializers import NotesSerializer, CollaboratorSerializer
+from .models import Notes, Label
+from .serializers import NotesSerializer, LabelSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -135,11 +135,11 @@ class Collaborator(APIView):
         try:
 
             note = Notes.objects.get(id=request.data.get("id"))
-            note.collaborator.add(request.data.get("collaborator"))
-            note.save()
+            # note.collaborator.add(request.data.get("collaborator"))     for single data
+            note.collaborator.set(request.data.get("collaborator"))         #for multiple data set method is used
 
 
-            return Response({"msg": "created successfully", "data": request.data},
+            return Response({"msg": "created successfully", "data":NotesSerializer(note).data },
                             status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
 
         except Exception as e:
@@ -150,8 +150,72 @@ class Collaborator(APIView):
         try:
            note=Notes.objects.get(id=request.data.get("id"))
            note.collaborator.remove(request.data.get("collaborator"))
-           note.collaborator.all()
+
            return Response({"msg": "Collaborator deleted successfully", "data": {}}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            lg.error(e)
+            return Response({"msg": str(e)}, status=400)
+class Label(APIView):
+    @verify_token
+    def post(self,request):
+        try:
+            serializer=LabelSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            lg.info(serializer.data)
+
+            # return Response({"msg": "created successfully", "data": NotesSerializer(note).data},
+            #                 status=status.HTTP_201_CREATED)  # serializer.data is used for deserialization
+            return Response({"msg": "created successfully", "data": serializer.data},
+                                                     status=status.HTTP_201_CREATED)
+        except Exception as e:
+            lg.error(e)
+            return Response({"msg": str(e)}, status=400)
+    @verify_token
+    def get(self, request):
+        """
+             Args:
+                 request: accepting the user id from client server or postman
+             Returns:
+                 response with success message
+             """
+        try:
+            print(request.data)
+            label_list = Label.objects.filter(user=request.data.get("user_id"))
+            print(label_list)
+            serializer = LabelSerializer(label_list, many=True)
+            lg.info(serializer.data)
+            return Response({"msg": "Data retrieved successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            lg.error(e)
+            return Response({"msg": str(e)}, status=400)
+
+    @verify_token
+    def put(self,request):
+
+        try:
+            print(request.data)
+            print(request.data.get("id"))
+            label = Label.objects.get(id=request.data.get("id"), user=request.data.get("user"))
+            serializer = LabelSerializer(label, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()  # serialize the data after validation
+            lg.info(serializer.data)
+
+            return Response({"msg": "Data updated successfully", "data": serializer.data},
+                            status=status.HTTP_202_ACCEPTED)  # serializer.data is used for deserialization
+
+        except Exception as e:
+            lg.error(e)
+            return Response({"msg": str(e)}, status=400)
+    @verify_token
+    def delete(self,request):
+
+        try:
+
+            label = Label.objects.get(id=request.data.get("id"))
+            label.delete()
+            return Response({"msg": "Notes deleted successfully", "data": {}}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             lg.error(e)
             return Response({"msg": str(e)}, status=400)

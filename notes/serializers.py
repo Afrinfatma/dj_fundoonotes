@@ -1,5 +1,6 @@
-from .models import Notes
+from .models import Notes, Label
 from rest_framework import serializers
+
 
 class NotesSerializer(serializers.ModelSerializer):
     """
@@ -10,15 +11,20 @@ class NotesSerializer(serializers.ModelSerializer):
        An automatically determined set of fields.
        Simple default implementations for the create() and update() methods.
        """
+
     class Meta:
         model = Notes
-        fields = ['id', 'title', 'description', 'user_id','collaborator']
-        read_only_fields = ['id','collaborator']
+        fields = ['id', 'title', 'description', 'user_id', 'collaborator']
+        read_only_fields = ['id', 'collaborator']
+
 
 class CollaboratorSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Notes
-        fields=['id','collaborator']
+        fields = ['id', 'collaborator']
 
 
+class LabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Label
+        fields = ['title', 'color', 'user', 'label']
