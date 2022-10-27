@@ -21,7 +21,7 @@ def verify_token(function):
         if user is None:
             raise Exception(" user not found")
         request.data.update(user_id=user.id)
-        print("verify_token",request.data)
+
         return function(self, request)
 
     return wrapper

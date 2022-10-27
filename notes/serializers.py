@@ -14,8 +14,8 @@ class NotesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notes
-        fields = ['id', 'title', 'description', 'user_id', 'collaborator']
-        read_only_fields = ['id', 'collaborator']
+        fields = ['id', 'title', 'description', 'user_id', 'collaborator','label']
+        read_only_fields = ['id', 'collaborator','label']
 
 
 class CollaboratorSerializer(serializers.ModelSerializer):
@@ -27,4 +27,4 @@ class CollaboratorSerializer(serializers.ModelSerializer):
 class LabelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Label
-        fields = ['title', 'color', 'user', 'label']
+        fields = ['title', 'color', 'user','id']
